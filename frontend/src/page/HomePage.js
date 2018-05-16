@@ -9,7 +9,7 @@ export default class HomePage extends Component {
      return (
         <div>
             <div style={{ fontSize: '50px', color: 'black', textAlign: 'center'}}>
-            基于新浪微博数据爬取的用户行为分析
+            基于微博的用户关系及行为特征分析系统
             </div>
             <div style={{marginTop: '250px'}}>
             <Row type="flex" justify="space-between">
