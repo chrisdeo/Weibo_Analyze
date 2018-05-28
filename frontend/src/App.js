@@ -71,7 +71,7 @@ class App extends Component {
             </Menu.Item>
             <Menu.Item key="/query">
               <Icon type="search" />
-              <span>相似查询</span>
+              <span>相关查询</span>
               <Link to='/query'></Link>
             </Menu.Item>
             <Menu.Item key="/analysis">

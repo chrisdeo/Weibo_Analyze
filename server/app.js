@@ -8,12 +8,17 @@ const db = new Monk('localhost:27017/SinaWeibo');
 const repost = new Monk('localhost:27017/SinaWeibo_repost1')
 const commentdb = new Monk('localhost:27017/Weibo_topic');
 const contentdb = new Monk('localhost:27017/Weibo_content')
-
+/**
+ * CommonJS导入依赖环境，数据库连接
+ */
 
 db.then(() => {
     console.log('connected successfully');
 })
 
+/**
+ * 取得数据库Collection操作对象，若不存在将会创建
+ */
 const personalInformation = db.get('PersonalInformation');
 const blog = db.get('PersonalBlog');
 const topic = commentdb.get('topic');
@@ -27,6 +32,10 @@ const repost1 = repost.get('RepostBlog')
 const repost2 = repost.get('RepostBlog1')
 const repost3 = repost.get('RepostBlog2')
 
+
+/**
+ * 用户登录测试
+ */
 app.use(bodyParser());
 router.get('/', async (ctx, next) => {
     ctx.response.body = `<h1>Index</h1>
@@ -50,6 +59,9 @@ router.post('/signin', async (ctx, next) => {
     }
 });
 
+/**
+ * 获得用户属性信息
+ */
 router.get('/getPersonalInformation', async (ctx, next) => {
     let query = await personalInformation.find({});
     query.forEach((x) => {
@@ -61,6 +73,9 @@ router.get('/getPersonalInformation', async (ctx, next) => {
     ctx.response.body = query;
 });
 
+/**
+ * 获得用户的所有微博拼接信息
+ */
 router.get('/getUserList', async (ctx, next) => {
     let query = await blog.distinct('UserID');
     for (let id of query) {
@@ -79,6 +94,10 @@ router.get('/getUserList', async (ctx, next) => {
     console.log('finished')
 });
 
+
+/**
+ * 正则清洗拼接后的微博信息
+ */
 router.get('/regexContent', async (ctx, next) => {
 
     const regex = /转发了(.*)的微博/g
@@ -106,6 +125,9 @@ router.get('/regexContent', async (ctx, next) => {
     ctx.response.body = { code: 'success' };
 });
 
+/**
+ * 获得生成标签和用户认证、昵称、简介对比
+ */
 router.get('/tagComparison', async (ctx, next) => {
     let query = await usersign.find({}, { _id: 0 });
     query.forEach(async (x) => {
@@ -122,6 +144,9 @@ router.get('/tagComparison', async (ctx, next) => {
     ctx.response.body = { code: 'success' };
 });
 
+/**
+ * 获得以爬取的转发内容
+ */
 router.get('/getRepostList', async (ctx, next) => {
     let rep = await repost1.find({OriginalBlogID:'0'}, { _id: 0 ,Repost_Nickname:1,OriginalBlogTitle:1,});
     let rep1 = await repost2.find({OriginalBlogID:'0'}, { _id: 0 ,Repost_Nickname:1,OriginalBlogTitle:1,});
@@ -146,7 +171,9 @@ router.get('/getRepostList', async (ctx, next) => {
     ctx.response.body = repList;
 });
 
-
+/**
+ * 获得用户标签
+ */
 router.get('/getPersonalTag', async (ctx, next) => {
     let query = await usersign.find({}, { _id: 0 });
     query.forEach((x) => {
@@ -158,6 +185,9 @@ router.get('/getPersonalTag', async (ctx, next) => {
     ctx.response.body = query;
 });
 
+/**
+ * 剔除重复用户，将唯一用户信息内容存入新表
+ */
 router.get('/getComUser', async (ctx, next) => {
     let query = await personalFollowAndFans.distinct('UserID');
     let tableObj = [];    
@@ -175,12 +205,18 @@ router.get('/getComUser', async (ctx, next) => {
     ctx.response.body = { code: 'success' };
 });
 
+/**
+ * 获得唯一化后的用户信息
+ */
 router.get('/getComList', async (ctx, next) => {
     let query = await user.find({},{_id:0});
     ctx.response.type = "application/json";
     ctx.response.body = query;
 });
 
+/**
+ * 模糊查询微博信息
+ */
 router.get('/vagueQuery', async (ctx, next) => {
     let data  =  ctx.query.data;
     let query = await blog.find({'Content':{$regex:data}}, { _id: 0 ,Content:1,UserID:1});
@@ -188,7 +224,9 @@ router.get('/vagueQuery', async (ctx, next) => {
     ctx.response.body = query;
 });
 
-
+/**
+ * 紧密度计算
+ */
 router.get('/calCompact', async (ctx, next) => {
     let list  =  ctx.query['list[]'];
     let username1 = JSON.parse(list[0]).Nickname;
@@ -245,44 +283,59 @@ router.get('/calCompact', async (ctx, next) => {
     ctx.response.body = compact;
 });
 
-
-
+/**
+ * 统计用户出生年代
+ */
 router.get('/getPersonalBirthday', async (ctx, next) => {
     let query = await personalInformation.find({}, { _id: 0, Birthday: 1 });
     ctx.response.type = "application/json";
     ctx.response.body = query;
 });
 
+/**
+ * 统计用户男女比例
+ */
 router.get('/getMaleCount', async (ctx, next) => {
     let query = await personalInformation.count({ Gender: '男' });
     ctx.response.type = "application/json";
     ctx.response.body = query;
 });
-
 router.get('/getFemaleCount', async (ctx, next) => {
     let query = await personalInformation.count({ Gender: '女' });
     ctx.response.type = "application/json";
     ctx.response.body = query;
 });
 
+/**
+ * 统计用户地域划分
+ */
 router.get('/getRegion', async (ctx, next) => {
     let query = await personalInformation.find({}, { _id: 0, Region: 1 });
     ctx.response.type = "application/json";
     ctx.response.body = query;
 });
 
+/**
+ * 统计用户兴趣标签
+ */
 router.get('/getLabel', async (ctx, next) => {
     let query = await personalInformation.find({}, { _id: 0, Label: 1 });
     ctx.response.type = "application/json";
     ctx.response.body = query;
 });
 
+/**
+ * 获取爬取的热搜url
+ */
 router.get('/getTopicUrl', async (ctx, next) => {
     let query = await topic.find({}, { _id: 0, topic_name: 1, topic_id: 1, status: 1 });
     ctx.response.type = "application/json";
     ctx.response.body = query;
 });
 
+/**
+ * 获取爬取状态
+ */
 router.get('/getStatus', async (ctx, next) => {
     let id = ctx.query.id;
     let query = await topic.find({ topic_id: { $eq: id } }, { _id: 0, status: 1 });
@@ -290,6 +343,9 @@ router.get('/getStatus', async (ctx, next) => {
     ctx.response.body = query;
 });
 
+/**
+ * 统计用户发博长度
+ */
 router.get('/getPostContent', async (ctx, next) => {
     let query = await blog.find({ Repost_BlogID: { $exists: false } }, { _id: 0, Content: 1 });
     let lenArr = [0, 0, 0, 0, 0, 0, 0]
@@ -322,6 +378,9 @@ router.get('/getPostContent', async (ctx, next) => {
     ctx.response.body = lenArr;
 });
 
+/**
+ * 统计用户评论、转发次数
+ */
 router.get('/getRepostCommentNum', async (ctx, next) => {
     let rep_num = await blog.count({ Repost_BlogID: { $exists: true } });
     let comment_num = await blog.count({ Number_Comment: { $gt: 0 } });
@@ -332,6 +391,9 @@ router.get('/getRepostCommentNum', async (ctx, next) => {
     ctx.response.body = query;
 })
 
+/**
+ * 统计用户发博时间
+ */
 router.get('/getTimePost', async (ctx, next) => {
     let query = await blog.find({}, { _id: 0, PostTimeAndFromType: 1 });
     let timeObj = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -393,6 +455,9 @@ router.get('/getTimePost', async (ctx, next) => {
     ctx.response.body = timeObj;
 });
 
+/**
+ * 统计用户发博数量
+ */
 router.get('/getBlogNum', async (ctx, next) => {
     let query = await personalInformation.aggregate({ $group: { _id: { Number_Blog: "$Number_Blog" }, total: { $sum: 1 } } }, { $sort: { total: 1 } })
     let loge = Math.log;
@@ -404,6 +469,9 @@ router.get('/getBlogNum', async (ctx, next) => {
     ctx.response.body = arr;
 });
 
+/**
+ * 子进程启动热搜爬虫程序
+ */
 router.get('/spiderForTopic', (ctx, next) => {
     ctx.response.body = `<h1>热搜爬虫程序已启动</h1>`;
     let child_process = require('child_process');
@@ -419,6 +487,9 @@ router.get('/spiderForTopic', (ctx, next) => {
     })
 })
 
+/**
+ * 子进程启动评论爬虫程序
+ */
 router.get('/spiderForComment', async (ctx, next) => {
     ctx.response.body = `<h1>评论爬虫程序已启动</h1>`;
     let child_process = require('child_process');
@@ -435,6 +506,9 @@ router.get('/spiderForComment', async (ctx, next) => {
     })
 });
 
+/**
+ * nlp情感分析
+ */
 router.get('/nlpAnalyze', (ctx, next) => {
     ctx.response.body = `<h1>nlp情感分析</h1>`;
     let child_process = require('child_process');
@@ -451,6 +525,9 @@ router.get('/nlpAnalyze', (ctx, next) => {
     })
 })
 
+/**
+ * 词云生成
+ */
 router.get('/generateWordCloud', (ctx, next) => {
     ctx.response.body = `<h1>词云生成</h1>`;
     let child_process = require('child_process');
@@ -468,12 +545,18 @@ router.get('/generateWordCloud', (ctx, next) => {
     })
 })
 
+/**
+ * 图片上传
+ */
 router.post('/upload', async (ctx, next) => {
     ctx.body = {
         code: 'success',
     }
 });
 
+/**
+ * 转发链路生成
+ */
 router.get('/repostLink', (ctx, next) => {
     ctx.response.body = `<h1>转发链路分析</h1>`;
     let child_process = require('child_process');
@@ -494,6 +577,9 @@ router.get('/repostLink', (ctx, next) => {
     })
 })
 
+/**
+ * 相关度计算
+ */
 router.get('/calSim', (ctx, next) => {
     const regex = /转发了(.*)的微博/g
     const reg = /\s/g     //剔除空格
@@ -527,7 +613,9 @@ router.get('/calSim', (ctx, next) => {
     })
 })
 
-
+/**
+ * 跨域解决方案
+ */
 app.use(cors({
     origin: '*',
     exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
